@@ -30,6 +30,7 @@ public:
 
 	/* Math functions */
 	void add(const Matrix<T>& b);
+	void subtract(const Matrix<T>& b);
 	void hadamard(const Matrix<T>& b);
 	void multiply(T scalar);
   Matrix<T> transpose() const;
@@ -42,6 +43,8 @@ public:
 
   int rows();
   int cols();
+
+  int argmax() const;
 
 private:
 	int rows_;
@@ -134,6 +137,13 @@ void Matrix<T>::add(const Matrix<T>& b) {
 }
 
 template<typename T>
+void Matrix<T>::subtract(const Matrix<T>& b) {
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    set(i, get(i) - b.get(i));
+  }
+}
+
+template<typename T>
 void Matrix<T>::hadamard(const Matrix<T>& b) {
   for (std::size_t i = 0; i < data_.size(); ++i) {
     set(i, get(i) * b.get(i));
@@ -205,6 +215,19 @@ int Matrix<T>::rows() {
 template<typename T>
 int Matrix<T>::cols() {
   return cols_;
+}
+
+template<typename T>
+int Matrix<T>::argmax() const {
+  int max_index = 0;
+  T max_val = data_[0];
+  for (int i = 1; i < rows_ * cols_; ++i) {
+    if (data_[i] > max_val) {
+      max_val = data_[i];
+      max_index = i;
+    }
+  }
+  return max_index;
 }
 
 #endif

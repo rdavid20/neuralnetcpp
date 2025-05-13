@@ -3,20 +3,9 @@
 
 #include <vector>
 #include <iostream>
-#include <random>
-#include <type_traits>
 #include <cassert>
 #include <functional>
 #include "matrix.hpp"
-
-/*
-  Functions i need:
-    - predict(input)
-    - train(input, target)
-    - forward(input)
-    - backward(target)
-    - update (learning_rate)
-*/
 
 /* Class Definition */
 template<typename T>
@@ -29,7 +18,6 @@ public:
 
 	void train(const Matrix<T>& input, const Matrix<T>& target, T learning_rate);
 
-
 private:
   std::vector<int> layer_sizes_;
   std::vector<Matrix<T>> weights_;
@@ -39,8 +27,7 @@ private:
 
   std::vector<Matrix<T>> forward(const Matrix<T>& input);
 
-  void backward(const std::vector<Matrix<T>>& activations,
-    const Matrix<T>& target, T learning_rate);
+  void backward(const std::vector<Matrix<T>>& activations, const Matrix<T>& target, T learning_rate);
 };
 
 /* Functions */
@@ -63,8 +50,13 @@ NeuralNet<T>::NeuralNet(const std::vector<int>& layers) {
   }
   std::cout << std::endl;
 
-  activation_ = [](T x) { return x > 0 ? x : 0; };
-  activation_derivative_ = [](T x) { return x > 0 ? 1 : 0; };
+  // activation_ = [](T x) { return x > 0 ? x : 0; };
+  // activation_derivative_ = [](T x) { return x > 0 ? 1 : 0; };
+  activation_ = [](T x) { return static_cast<T>(1) / (static_cast<T>(1) + std::exp(-x)); };
+  activation_derivative_ = [](T a) {
+      return a * (1 - a);  // valid because a = sigmoid(z)
+  };
+
 }
 
 template<typename T>
@@ -81,8 +73,73 @@ Matrix<T> NeuralNet<T>::predict(const Matrix<T>& input) {
     z.apply(activation_);
     activation = z;
   }
+
   return activation;
 }
+
+template<typename T>
+std::vector<Matrix<T>> NeuralNet<T>::forward(const Matrix<T>& input) {
+  std::vector<Matrix<T>> activations;
+  Matrix<T> activation = input;
+  activations.push_back(activation);
+
+  for (std::size_t i = 0; i < layer_sizes_.size() - 1; ++i) {
+    Matrix<T> z = weights_[i].matMul(activation);
+    z.add(biases_[i]);
+    z.apply(activation_);
+    activation = z;
+    activations.push_back(activation);
+  }
+
+  return activations;
+}
+
+template<typename T>
+void NeuralNet<T>::backward(const std::vector<Matrix<T>>& activations, const Matrix<T>& target, T learning_rate) {
+  Matrix<T> output = activations.back();
+  Matrix<T> error = output;
+  error.subtract(target);
+
+  Matrix<T> delta = output;
+  delta.apply(activation_derivative_);
+  delta.hadamard(error);
+
+  Matrix<T> prev_activation = activations[activations.size() - 2];
+  Matrix<T> grad_weights = delta.matMul(prev_activation.transpose());
+  Matrix<T> grad_biases = delta;
+
+  grad_weights.multiply(learning_rate);
+  grad_biases.multiply(learning_rate);
+
+  weights_.back().subtract(grad_weights);
+  biases_.back().subtract(grad_biases);
+
+  for (std::size_t i = weights_.size() - 2; i < weights_.size(); --i) {
+    Matrix<T> wT = weights_[i + 1].transpose();
+    Matrix<T> new_delta = wT.matMul(delta);
+    Matrix<T> act_deriv = activations[i + 1];
+    act_deriv.apply(activation_derivative_);
+    new_delta.hadamard(act_deriv);
+    delta = new_delta;
+
+    Matrix<T> prev_activation = activations[i];
+    Matrix<T> grad_weights = delta.matMul(prev_activation.transpose());
+    Matrix<T> grad_biases = delta;
+
+    grad_weights.multiply(learning_rate);
+    grad_biases.multiply(learning_rate);
+
+    weights_[i].subtract(grad_weights);
+    biases_[i].subtract(grad_biases);
+  }
+}
+
+template<typename T>
+void NeuralNet<T>::train(const Matrix<T>& input, const Matrix<T>& target, T learning_rate) {
+  std::vector<Matrix<T>> activations = forward(input);
+  backward(activations, target, learning_rate);
+}
+
 
 
 
