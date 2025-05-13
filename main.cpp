@@ -1,14 +1,17 @@
 #include <iostream>
 
 #include "matrix.hpp"
+#include "neuralnetwork.hpp"
 
 int main(void) {
 
-	Matrix<int> test(2, 3);
-	test.fillRandom(0, 10);
-	test.print();
-	Matrix<int> test2 = test.transpose();
-	Matrix<int> output = test.matMul(test2);
-	output.print();
+  NeuralNet<float> net({2, 3, 2});
+
+  Matrix<float> input(2, 1);
+  input.set(0, 0.5f);
+  input.set(1, 0.8f);
+  Matrix<float> output = net.predict(input);
+  output.print();
+
 	return 1;
 }

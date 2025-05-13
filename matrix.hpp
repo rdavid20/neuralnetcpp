@@ -6,6 +6,7 @@
 #include <random>
 #include <type_traits>
 #include <cassert>
+#include <functional>
 
 /* Class Definition */
 template<typename T>
@@ -37,6 +38,11 @@ public:
   T sum() const;
   T mean() const;
 
+  void apply(std::function<T(T)> func);
+
+  int rows();
+  int cols();
+
 private:
 	int rows_;
 	int cols_;
@@ -49,12 +55,11 @@ Matrix<T>::Matrix(int rows, int cols) {
 	rows_ = rows;
 	cols_ = cols;
 	data_ = std::vector<T>(rows * cols, T{});
-	std::cout << "Creating matrix of " << rows_ << "x" << cols_ << " size\n";
+	//std::cout << "Creating matrix of " << rows_ << "x" << cols_ << " size\n";
 };
 
 template<typename T>
 Matrix<T>::~Matrix() {
-	std::cout << "Destroying matrix\n";
 }
 
 template<typename T>
@@ -185,6 +190,21 @@ Matrix<T> Matrix<T>::matMul(const Matrix<T>& other) const {
   return output;
 }
 
+template<typename T>
+void Matrix<T>::apply(std::function<T(T)> func) {
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    set(i, func(get(i)));
+  }
+}
 
+template<typename T>
+int Matrix<T>::rows() {
+  return rows_;
+}
+
+template<typename T>
+int Matrix<T>::cols() {
+  return cols_;
+}
 
 #endif
