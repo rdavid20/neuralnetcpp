@@ -8,9 +8,7 @@
 
 #include "matrix.hpp"
 #include "neuralnetwork.hpp"
-
-std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> generateXORDataset();
-std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> loadIrisDataset(const std::string& filename);
+#include "loader.hpp"
 
 int main(void) {
 
@@ -50,61 +48,4 @@ int main(void) {
   std::cout << "Accuracy: " << accuracy * 100.0f << "%\n";
 
 	return 1;
-}
-
-std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> loadIrisDataset(const std::string& filename) {
-    std::vector<Matrix<float>> inputs;
-    std::vector<Matrix<float>> targets;
-
-    std::unordered_map<std::string, int> class_map = {
-        {"Iris-setosa", 0},
-        {"Iris-versicolor", 1},
-        {"Iris-virginica", 2}
-    };
-
-    std::ifstream file(filename);
-    std::string line;
-
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string item;
-        std::vector<float> values;
-
-        // Read 4 features
-        for (int i = 0; i < 4; ++i) {
-            if (!std::getline(ss, item, ',')) {
-                continue;
-            }
-
-            try {
-                values.push_back(std::stof(item));
-            } catch (const std::invalid_argument&) {
-                continue;
-            }
-        }
-
-        // Read class label
-        std::string label;
-        std::getline(ss, label, ',');
-
-        if (values.size() != 4) {
-            continue;
-        }
-
-        // Create input matrix (4×1)
-        Matrix<float> input(4, 1);
-        for (int i = 0; i < 4; ++i)
-            input.set(i, 0, values[i]);
-
-        inputs.push_back(input);
-
-        // Create one-hot output matrix (3×1)
-        Matrix<float> output(3, 1);
-        int class_index = class_map[label];
-        output.set(class_index, 0, 1.0f);
-
-        targets.push_back(output);
-    }
-
-    return {inputs, targets};
 }
