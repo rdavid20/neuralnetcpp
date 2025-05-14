@@ -127,6 +127,10 @@ void NeuralNet<T>::backward(const std::vector<Matrix<T>>& activations, const Mat
 
 template<typename T>
 void NeuralNet<T>::train(const Matrix<T>& input, const Matrix<T>& target, T learning_rate) {
+  if (!built_) {
+      throw std::runtime_error("Cannot call train(): network has not been built. Call build() first.");
+  }
+
   std::vector<Matrix<T>> activations = forward(input);
   backward(activations, target, learning_rate);
 }
