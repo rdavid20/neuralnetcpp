@@ -27,6 +27,7 @@ public:
 	/* Functions for filling the Matrix */
 	void fill(T value);
 	void fillRandom(T min, T max);
+	void fillNormal(T mean, T stddev);
 
 	/* Math functions */
 	void add(const Matrix<T>& b);
@@ -127,6 +128,19 @@ void Matrix<T>::fillRandom(T min, T max) {
 	} else {
 		static_assert(false, "Unsupported type for fillRandom()");
 	}
+}
+
+template<typename T>
+void Matrix<T>::fillNormal(T mean, T stddev) {
+  static_assert(std::is_floating_point<T>::value, "fillNormal() requires a floating-point type");
+
+  std::random_device rd;
+	std::mt19937 gen(rd());
+	std::normal_distribution<T> dist(mean, stddev);
+
+  for (std::size_t i = 0; i < data_.size(); ++i) {
+    set(i, dist(gen));
+  }
 }
 
 template<typename T>

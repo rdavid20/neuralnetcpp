@@ -14,13 +14,17 @@ std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> loadIrisDatase
 
 int main(void) {
 
-  NeuralNet<float> net({4, 6, 3});
+  NeuralNet<float> net;
+  net.setLayerSizes({4, 6, 3});
+  net.setActivation("Sigmoid");
+  net.pickInitializer("Xavier");
+  net.build();
 
   auto [inputs, targets] = loadIrisDataset("datasets/iris.data");
 
   auto start = std::chrono::high_resolution_clock::now();
 
-  for (int epoch = 0; epoch < 1000; ++epoch) {
+  for (int epoch = 0; epoch < 10000; ++epoch) {
     for (std::size_t i = 0; i < inputs.size(); ++i) {
       net.train(inputs[i], targets[i], 0.1f);
     }
@@ -40,61 +44,12 @@ int main(void) {
       if (predicted_class == true_class) {
           ++correct;
       }
-      std::cout << "Sample " << i << ": predicted = " << predicted_class
-                << ", target = " << true_class << "\n";
   }
 
   float accuracy = static_cast<float>(correct) / inputs.size();
   std::cout << "Accuracy: " << accuracy * 100.0f << "%\n";
 
 	return 1;
-}
-
-std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> generateXORDataset() {
-    std::vector<Matrix<float>> inputs;
-    std::vector<Matrix<float>> targets;
-
-    // (0, 0) -> 0
-    Matrix<float> in00(2, 1);
-    in00.set(0, 0, 0.0f);
-    in00.set(1, 0, 0.0f);
-    inputs.push_back(in00);
-
-    Matrix<float> out0(1, 1);
-    out0.set(0, 0, 0.0f);
-    targets.push_back(out0);
-
-    // (0, 1) -> 1
-    Matrix<float> in01(2, 1);
-    in01.set(0, 0, 0.0f);
-    in01.set(1, 0, 1.0f);
-    inputs.push_back(in01);
-
-    Matrix<float> out1a(1, 1);
-    out1a.set(0, 0, 1.0f);
-    targets.push_back(out1a);
-
-    // (1, 0) -> 1
-    Matrix<float> in10(2, 1);
-    in10.set(0, 0, 1.0f);
-    in10.set(1, 0, 0.0f);
-    inputs.push_back(in10);
-
-    Matrix<float> out1b(1, 1);
-    out1b.set(0, 0, 1.0f);
-    targets.push_back(out1b);
-
-    // (1, 1) -> 0
-    Matrix<float> in11(2, 1);
-    in11.set(0, 0, 1.0f);
-    in11.set(1, 0, 1.0f);
-    inputs.push_back(in11);
-
-    Matrix<float> out0b(1, 1);
-    out0b.set(0, 0, 0.0f);
-    targets.push_back(out0b);
-
-    return {inputs, targets};
 }
 
 std::pair<std::vector<Matrix<float>>, std::vector<Matrix<float>>> loadIrisDataset(const std::string& filename) {
