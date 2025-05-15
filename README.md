@@ -3,8 +3,6 @@
 
 This is a minimal, self-contained neural network implementation written entirely in modern C++17. It includes a matrix math engine, training logic, multiple activation functions, and support for loading the Iris dataset — all without any external ML libraries.
 
----
-
 ## 📁 Project Structure
 
 ```
@@ -19,8 +17,6 @@ This is a minimal, self-contained neural network implementation written entirely
 ├── datasets/            # (Ignored) Folder for Iris dataset and others
 ```
 
----
-
 ## 🚀 Building
 
 Make sure you're using a compiler that supports **C++17** (e.g., g++ ≥ 7 or clang ≥ 6).
@@ -31,7 +27,6 @@ make
 
 This will compile everything and place the executable in `build/neuralnet`.
 
----
 
 ## 🧠 Running the Iris Example
 
@@ -56,20 +51,18 @@ This will compile everything and place the executable in `build/neuralnet`.
    ./build/neuralnet
    ```
 
----
 
 ## 🔧 Configuration
 
 In `main.cpp`, you can configure:
 
 ```cpp
-net.setActivation("sigmoid");       // or "relu", "tanh", etc.
-net.pickInitializer("xavier");      // or "he", "uniform"
+net.setActivation("Sigmoid");       // or "ReLU", "Tanh", etc.
+net.pickInitializer("Xavier");      // or "He", "Uniform"
 net.setLayerSizes({4, 6, 3});       // input, hidden, output layers
 net.build();
 ```
 
----
 
 ## ✅ Features
 
@@ -81,15 +74,13 @@ net.build();
 - Training and evaluation on Iris dataset
 - Clean separation of logic (main, model, data loader)
 
----
 
 ## 📊 Expected Accuracy
 
-With `sigmoid` + `xavier` and `{4, 6, 3}` layers, you should see:
+With `Sigmoid` + `Xavier` and `{4, 6, 3}` layers, you should see:
 - **95–98% accuracy** on the Iris dataset after 1000 epochs
 - Slight variation per run (due to random weight init)
 
----
 
 ## 👤 Author
 
