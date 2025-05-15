@@ -52,7 +52,7 @@ This will compile everything and place the executable in `build/neuralnet`.
    ```
 
 
-## 🔧 Configuration
+## 🔧 Usage
 
 In `main.cpp`, you can configure:
 
@@ -62,6 +62,48 @@ net.pickInitializer("Xavier");      // or "He", "Uniform"
 net.setLayerSizes({4, 6, 3});       // input, hidden, output layers
 net.build();
 ```
+
+Models can be saved after training by calling:
+```cpp
+net.save("models/model.bin")
+```
+
+Later it can be loaded by:
+```cpp
+net.load("models/model.bin")
+```
+
+## 💾 Save File Format
+
+The neural network model is saved in a custom binary format for compact and fast I/O. Below is the structure of the save file:
+
+### 🧱 File Structure Overview
+
+| Offset | Size (bytes)     | Field                     | Description                                  |
+|--------|------------------|---------------------------|----------------------------------------------|
+| 0      | 4                | Magic number `"NNB1"`     | Identifies the file as a valid NN model file |
+| 4      | 4 (`uint32_t`)   | Version                   | Format version number (e.g., 0)              |
+| 8      | 4 (`uint32_t`)   | Number of layers          | How many layers in the network               |
+| 12     | 4 × N (`uint32_t`)| Layer sizes               | Sizes of each layer (e.g., 4, 6, 3)          |
+| ...    | 4 (`uint32_t`)   | Activation name length    | Number of bytes in activation string         |
+| ...    | N (char[])       | Activation name           | e.g., `"sigmoid"`                            |
+
+Following that, for each **weight matrix** (one per layer transition):
+
+1. 4 bytes (`uint32_t`) – number of rows
+2. 4 bytes (`uint32_t`) – number of columns
+3. `rows × cols × sizeof(T)` bytes – matrix data, row-major order
+
+Then, for each **bias matrix** (one per layer transition):
+
+1. 4 bytes (`uint32_t`) – number of rows
+2. 4 bytes (`uint32_t`) – number of columns
+3. `rows × cols × sizeof(T)` bytes – matrix data, row-major order
+
+### 🧠 Notes
+- All multi-byte values are stored in **native endian** (typically little-endian)
+- Activation must be restored using the string read
+- Data type `T` is assumed to be the same as used during saving (e.g., `float`)
 
 
 ## ✅ Features
