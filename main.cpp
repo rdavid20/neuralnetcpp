@@ -32,10 +32,13 @@ int main(void) {
   std::chrono::duration<double> elapsed = end - start;
   std::cout << "Training time: " << elapsed.count() << " seconds\n";
 
-  int correct = 0;
+  net.save("models/test.bin");
 
+  NeuralNet<float> net2;
+  net2.load("models/test.bin");
+  int correct = 0;
   for (std::size_t i = 0; i < inputs.size(); ++i) {
-      Matrix<float> prediction = net.predict(inputs[i]);
+      Matrix<float> prediction = net2.predict(inputs[i]);
       int predicted_class = prediction.argmax();
       int true_class = targets[i].argmax();
 

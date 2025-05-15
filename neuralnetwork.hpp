@@ -6,6 +6,9 @@
 #include <cassert>
 #include <functional>
 #include <string>
+#include <fstream>
+#include <cstdint>
+
 #include "matrix.hpp"
 #include "activation.hpp"
 #include "initializer.hpp"
@@ -27,6 +30,9 @@ public:
 
 	/* Build function. */
 	void build();
+
+	void save(std::string filePath);
+	void load(std::string filePath);
 
 private:
   std::vector<int> layer_sizes_;
@@ -221,6 +227,136 @@ void NeuralNet<T>::build() {
             << ", initializer: " << initializer_name_ << "\n";
 
   built_ = true;
+}
+
+template<typename T>
+void NeuralNet<T>::save(std::string filePath) {
+  uint32_t version = 0;
+  uint32_t num_layers = layer_sizes_.size();
+
+  std::ofstream out(filePath, std::ios::binary);
+  out.write("NNB1", 4);
+  out.write(reinterpret_cast<char*>(&version), sizeof(uint32_t));
+  out.write(reinterpret_cast<char*>(&num_layers), sizeof(uint32_t));
+
+  for (auto size : layer_sizes_) {
+    out.write(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+  }
+
+  /* Write activation function */
+  uint32_t len = activation_name_.size();
+  out.write(reinterpret_cast<char*>(&len), sizeof(uint32_t));
+  out.write(activation_name_.c_str(), len);
+
+  /* Write Weights to binary file. First write rows, cols and then weights.
+  Repeat per weight matrix. */
+  for (std::size_t i = 0; i < layer_sizes_.size() - 1; ++i) {
+    Matrix<T> matrix = weights_[i];
+    uint32_t rows = matrix.rows();
+    uint32_t cols = matrix.cols();
+    out.write(reinterpret_cast<char*>(&rows), sizeof(uint32_t));
+    out.write(reinterpret_cast<char*>(&cols), sizeof(uint32_t));
+
+    for (std::size_t j = 0; j < rows * cols; ++j) {
+      T value = matrix.get(j);
+      out.write(reinterpret_cast<char*>(&value), sizeof(T));
+    }
+  }
+
+  /* Do the same for biases */
+  for (std::size_t i = 0; i < biases_.size(); ++i) {
+    Matrix<T> matrix = biases_[i];
+    uint32_t rows = matrix.rows();
+    uint32_t cols = matrix.cols();
+    out.write(reinterpret_cast<char*>(&rows), sizeof(uint32_t));
+    out.write(reinterpret_cast<char*>(&cols), sizeof(uint32_t));
+
+    for (std::size_t j = 0; j < rows * cols; ++j) {
+      T value = matrix.get(j);
+      out.write(reinterpret_cast<char*>(&value), sizeof(T));
+    }
+  }
+
+  out.close();
+}
+
+template<typename T>
+  void NeuralNet<T>::load(std::string filePath) {
+    std::ifstream in(filePath, std::ios::binary);
+    if (!in) {
+        std::cerr << "File not found or not readable.\n";
+        return;
+    }
+
+    char magic[4];
+    in.read(magic, 4);
+    std::string header(magic, 4);
+    if (header != "NNB1") {
+      throw std::runtime_error("Wrong file format.");
+    }
+
+    uint32_t version;
+    in.read(reinterpret_cast<char*>(&version), sizeof(uint32_t));
+
+    uint32_t num_layers;
+    in.read(reinterpret_cast<char*>(&num_layers), sizeof(uint32_t));
+    layer_sizes_.clear();
+    layer_sizes_.reserve(num_layers);
+
+    for (uint32_t i = 0; i < num_layers; ++i) {
+      uint32_t size;
+      in.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
+      layer_sizes_.push_back(static_cast<int>(size));
+    }
+
+    /* Read activation function name */
+    uint32_t len;
+    in.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
+    std::string name(len, '\0');
+    in.read(&name[0], len);
+    setActivation(name);
+
+    /* Load weights */
+    weights_.clear();
+    for (std::size_t i = 0; i < layer_sizes_.size() - 1; ++i) {
+      uint32_t rows;
+      uint32_t cols;
+      in.read(reinterpret_cast<char*>(&rows), sizeof(uint32_t));
+      in.read(reinterpret_cast<char*>(&cols), sizeof(uint32_t));
+
+      Matrix<T> weights(rows, cols);
+      for (std::size_t j = 0; j < rows * cols; ++j) {
+        T value;
+        in.read(reinterpret_cast<char*>(&value), sizeof(T));
+
+        weights.set(j, value);
+      }
+      weights_.push_back(weights);
+
+      std::cout << "Loaded weight matrix of size: " << rows << "x" << cols << std::endl;
+    }
+
+    /* Load biases */
+    biases_.clear();
+    for (std::size_t i = 0; i < layer_sizes_.size() - 1; ++i) {
+      uint32_t rows;
+      uint32_t cols;
+      in.read(reinterpret_cast<char*>(&rows), sizeof(uint32_t));
+      in.read(reinterpret_cast<char*>(&cols), sizeof(uint32_t));
+
+      Matrix<T> biases(rows, cols);
+      for (std::size_t j = 0; j < rows * cols; ++j) {
+        T value;
+        in.read(reinterpret_cast<char*>(&value), sizeof(T));
+
+        biases.set(j, value);
+      }
+      biases_.push_back(biases);
+
+      std::cout << "Loaded bias matrix of size: " << rows << "x" << cols << std::endl;
+
+    }
+    in.close();
 }
 
 
